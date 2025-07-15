@@ -1,8 +1,37 @@
-# PrestaShop
-You find the links to the module for the different PrestaShop versions below
+# PrestaShop 8 PostFinance Checkout Integration
+This project has now been archived. Future releases can be found [here](https://github.com/whitelabelGithubOwnerName/prestashop-1.7):
 
-## PrestaShop 1.6
-The Wallee integration for Prestashop 1.6 can be downloaded [here](https://github.com/pfpayments/prestashop-1.6)
+This repository contains the PrestaShop PostFinance Checkout payment module that enables the shop to process payments with [PostFinance Checkout](https://postfinance.ch/en/business/products/e-commerce/postfinance-checkout-all-in-one.html).
 
-## PrestaShop 1.7
-The Wallee integration for Prestashop 1.7 can be downloaded [here](https://github.com/pfpayments/prestashop-1.7)
+To install module manually by dragging up zip file, please download [.zip archive](https://plugin-documentation.postfinance-checkout.ch/pfpayments/prestashop/1.0.11/postfinancecheckout.zip) of module with correct structure required by Prestashop installation
+
+##### To use this extension, a [PostFinance Checkout](https://checkout.postfinance.ch/en-ch/user/signup) account is required.
+
+## Requirements
+
+* [PrestaShop](https://www.prestashop.com/) 8
+* [PHP](http://php.net/) 8.1 (minimum PHP version supported by Prestashop 8 version)
+
+## Documentation
+
+* [English](https://plugin-documentation.postfinance-checkout.ch/pfpayments/prestashop/1.0.11/docs/en/documentation.html)
+
+## Support
+
+Support queries can be issued on the [PostFinance Checkout support site](https://www.postfinance.ch/en/business/support.html).
+
+## Supported versions
+
+____________________________________________________________________________
+| Prestashop 8 version   | Plugin major version   | Supported until        |
+|------------------------|------------------------|------------------------|
+| 8.0.x - 8.2.x          | 1.x                    | Further notice         |
+----------------------------------------------------------------------------
+
+## License
+
+Please see the [license file](https://github.com/pfpayments/prestashop/blob/1.0.11/LICENSE) for more information.
+
+## Other PrestaShop Versions
+
+Find the module for different PrestaShop versions [here](../../../prestashop).
