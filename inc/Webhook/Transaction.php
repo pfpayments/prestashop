@@ -145,6 +145,9 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
 
     protected function failed(\PostFinanceCheckout\Sdk\Model\Transaction $transaction, Order $sourceOrder)
     {
+        if (PostFinanceCheckoutHelper::getOrderMeta($sourceOrder, 'fulfill')) {
+            return;
+        }
         // Do not send email
         PostFinanceCheckoutBasemodule::startRecordingMailMessages();
         $errorStatusId = Configuration::get(PostFinanceCheckoutBasemodule::CK_STATUS_FAILED);
