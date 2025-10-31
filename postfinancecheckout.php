@@ -32,7 +32,7 @@ class PostFinanceCheckout extends PaymentModule
         $this->author = 'wallee AG';
         $this->bootstrap = true;
         $this->need_instance = 0;
-        $this->version = '1.0.12';
+        $this->version = '1.0.13';
         $this->displayName = 'PostFinance Checkout';
         $this->description = $this->l('This PrestaShop module enables to process payments with %s.');
         $this->description = sprintf($this->description, 'PostFinance Checkout');
@@ -121,10 +121,6 @@ class PostFinanceCheckout extends PaymentModule
             'AdminPostFinanceCheckoutOrder' => array(
                 'parentId' => -1, // No Tab in navigation
                 'name' => 'PostFinance Checkout ' . $this->l('Order Management')
-            ),
-            'AdminPostFinanceCheckoutCronJobs' => array(
-                'parentId' => Tab::getIdFromClassName('AdminTools'),
-                'name' => 'PostFinance Checkout ' . $this->l('CronJobs')
             )
         );
     }
@@ -150,7 +146,6 @@ class PostFinanceCheckout extends PaymentModule
         $output .= PostFinanceCheckoutBasemodule::handleSaveDownload($this);
         $output .= PostFinanceCheckoutBasemodule::handleSaveSpaceViewId($this);
         $output .= PostFinanceCheckoutBasemodule::handleSaveOrderStatus($this);
-        $output .= PostFinanceCheckoutBasemodule::handleSaveCronSettings($this);
         $output .= PostFinanceCheckoutBasemodule::displayHelpButtons($this);
         return $output . PostFinanceCheckoutBasemodule::displayForm($this);
     }
@@ -165,7 +160,6 @@ class PostFinanceCheckout extends PaymentModule
             PostFinanceCheckoutBasemodule::getDocumentForm($this),
             PostFinanceCheckoutBasemodule::getSpaceViewIdForm($this),
             PostFinanceCheckoutBasemodule::getOrderStatusForm($this),
-            PostFinanceCheckoutBasemodule::getCronSettingsForm($this),
         );
     }
 
@@ -179,8 +173,7 @@ class PostFinanceCheckout extends PaymentModule
             PostFinanceCheckoutBasemodule::getFeeItemConfigValues($this),
             PostFinanceCheckoutBasemodule::getDownloadConfigValues($this),
             PostFinanceCheckoutBasemodule::getSpaceViewIdConfigValues($this),
-            PostFinanceCheckoutBasemodule::getOrderStatusConfigValues($this),
-            PostFinanceCheckoutBasemodule::getCronSettingsConfigValues($this)
+            PostFinanceCheckoutBasemodule::getOrderStatusConfigValues($this)
         );
     }
 
@@ -348,11 +341,6 @@ class PostFinanceCheckout extends PaymentModule
         }
     }
 
-    public function hookDisplayTop($params)
-    {
-        return  PostFinanceCheckoutBasemodule::hookDisplayTop($this, $params);
-    }
-
     public function hookActionAdminControllerSetMedia($arr)
     {
         PostFinanceCheckoutBasemodule::hookActionAdminControllerSetMedia($this, $arr);
@@ -369,10 +357,6 @@ class PostFinanceCheckout extends PaymentModule
         return $backendController->access('edit');
     }
 
-    public function hookPostFinanceCheckoutCron($params)
-    {
-        return PostFinanceCheckoutBasemodule::hookPostFinanceCheckoutCron($params);
-    }
     /**
      * Show the manual task in the admin bar.
      * The output is moved with javascript to the correct place as better hook is missing.
@@ -382,7 +366,6 @@ class PostFinanceCheckout extends PaymentModule
     public function hookDisplayAdminAfterHeader()
     {
         $result = PostFinanceCheckoutBasemodule::hookDisplayAdminAfterHeader($this);
-        $result .= PostFinanceCheckoutBasemodule::getCronJobItem($this);
         return $result;
     }
 
