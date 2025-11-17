@@ -187,7 +187,8 @@ class AdminPostFinanceCheckoutMethodSettingsController extends ModuleAdminContro
                 'PostFinanceCheckoutSmartyfunctions',
                 'outputMethodForm'
             )
-        );
+	);
+	$this->context->smarty->addTemplateDir($this->getTemplatePath());
         $this->context->smarty->assign('formHtml', $form);
     }
 
@@ -227,7 +228,7 @@ class AdminPostFinanceCheckoutMethodSettingsController extends ModuleAdminContro
                     array(
                         'id' => 'active_on',
                         'value' => 1,
-                        'label' => $this->l('Active', 'adminpostfinancecheckoutmethodsettingscontroller')
+                        'label' => $this->module->l('Active', 'adminpostfinancecheckoutmethodsettingscontroller')
                     ),
                     array(
                         'id' => 'active_off',
