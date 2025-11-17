@@ -187,8 +187,8 @@ class AdminPostFinanceCheckoutMethodSettingsController extends ModuleAdminContro
                 'PostFinanceCheckoutSmartyfunctions',
                 'outputMethodForm'
             )
-	);
-	$this->context->smarty->addTemplateDir($this->getTemplatePath());
+        );
+        $this->context->smarty->addTemplateDir($this->getTemplatePath());
         $this->context->smarty->assign('formHtml', $form);
     }
 
