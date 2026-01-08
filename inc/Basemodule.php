@@ -5,7 +5,7 @@
  * This Prestashop module enables to process payments with PostFinance Checkout (https://postfinance.ch/en/business/products/e-commerce/postfinance-checkout-all-in-one.html).
  *
  * @author customweb GmbH (http://www.customweb.com/)
- * @copyright 2017 - 2025 customweb GmbH
+ * @copyright 2017 - 2026 customweb GmbH
  * @license http://www.apache.org/licenses/LICENSE-2.0 Apache Software License (ASL 2.0)
  */
 
@@ -36,6 +36,10 @@ class PostFinanceCheckoutBasemodule
     const CK_MAIL = 'PFC_SHOP_EMAIL';
 
     const CK_INTEGRATION = 'PFC_SHOP_INTEGRATION';
+
+    const CK_INTEGRATION_TYPE_IFRAME = 0;
+
+    const CK_INTEGRATION_TYPE_PAYMENT_PAGE = 1;
 
     const CK_CART_RECREATION = 'PFC_CART_RECREATION';
 
@@ -84,7 +88,7 @@ class PostFinanceCheckoutBasemodule
     const TOTAL_MODE_WITHOUT_SHIPPING_INC = 4;
 
     const TOTAL_MODE_WITHOUT_SHIPPING_EXC = 5;
-    
+
     private static $recordMailMessages = false;
 
     private static $recordedMailMessages = array();
@@ -278,10 +282,7 @@ class PostFinanceCheckoutBasemodule
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
             }
             if ($refresh) {
-                $error = Hook::exec('postFinanceCheckoutSettingsChanged');
-                if (! empty($error)) {
-                    $output .= $module->displayError($error);
-                }
+                $output .= self::executeSettingsChangedHook($module);
             }
         }
         return $output;
@@ -342,10 +343,7 @@ class PostFinanceCheckoutBasemodule
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
             }
             if ($refresh) {
-                $error = Hook::exec('postFinanceCheckoutSettingsChanged');
-                if (! empty($error)) {
-                    $output .= $module->displayError($error);
-                }
+                $output .= self::executeSettingsChangedHook($module);
             }
         }
         return $output;
@@ -358,6 +356,7 @@ class PostFinanceCheckoutBasemodule
             if (! $module->getContext()->shop->isFeatureActive() || $module->getContext()->shop->getContext() == Shop::CONTEXT_SHOP) {
                 Configuration::updateValue(self::CK_CART_RECREATION, Tools::getValue(self::CK_CART_RECREATION));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -374,6 +373,7 @@ class PostFinanceCheckoutBasemodule
             if (! $module->getContext()->shop->isFeatureActive() || $module->getContext()->shop->getContext() == Shop::CONTEXT_SHOP) {
                 Configuration::updateValue(self::CK_MAIL, Tools::getValue(self::CK_MAIL));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -396,6 +396,7 @@ class PostFinanceCheckoutBasemodule
             if (! $module->getContext()->shop->isFeatureActive() || $module->getContext()->shop->getContext() == Shop::CONTEXT_SHOP) {
                 Configuration::updateValue(self::CK_INTEGRATION, Tools::getValue(self::CK_INTEGRATION));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -418,6 +419,7 @@ class PostFinanceCheckoutBasemodule
                 Configuration::updateValue(self::CK_SURCHARGE_TOTAL, Tools::getValue(self::CK_SURCHARGE_TOTAL));
                 Configuration::updateValue(self::CK_SURCHARGE_BASE, Tools::getValue(self::CK_SURCHARGE_BASE));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -435,6 +437,7 @@ class PostFinanceCheckoutBasemodule
                 Configuration::updateValue(self::CK_INVOICE, Tools::getValue(self::CK_INVOICE));
                 Configuration::updateValue(self::CK_PACKING_SLIP, Tools::getValue(self::CK_PACKING_SLIP));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -451,6 +454,7 @@ class PostFinanceCheckoutBasemodule
             if (! $module->getContext()->shop->isFeatureActive() || $module->getContext()->shop->getContext() == Shop::CONTEXT_SHOP) {
                 Configuration::updateValue(self::CK_SPACE_VIEW_ID, Tools::getValue(self::CK_SPACE_VIEW_ID));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -473,6 +477,7 @@ class PostFinanceCheckoutBasemodule
                 Configuration::updateValue(self::CK_STATUS_DECLINED, Tools::getValue(self::CK_STATUS_DECLINED));
                 Configuration::updateValue(self::CK_STATUS_FULFILL, Tools::getValue(self::CK_STATUS_FULFILL));
                 $output .= $module->displayConfirmation($module->l('Settings updated', 'basemodule'));
+                $output .= self::executeSettingsChangedHook($module);
             } else {
                 $output .= $module->displayError(
                     $module->l('You can not store the configuration for all Shops or a Shop Group.', 'basemodule')
@@ -658,7 +663,7 @@ class PostFinanceCheckoutBasemodule
         }
         return $values;
     }
-    
+
     public static function getCartRecreationForm(PostFinanceCheckout $module)
     {
         $cartRecreationConfig = array(
@@ -729,7 +734,7 @@ class PostFinanceCheckoutBasemodule
                             'name' => $module->l('Payment page', 'basemodule'),
                             'type' => PostFinanceCheckoutBasemodule::TOTAL_MODE_BOTH_EXC
                         ),
-                    
+
                     ),
                     'id' => 'type',
                     'name' => 'name'
@@ -1352,6 +1357,15 @@ class PostFinanceCheckoutBasemodule
         return "";
     }
 
+    private static function executeSettingsChangedHook(PostFinanceCheckout $module)
+    {
+        $error = Hook::exec('postFinanceCheckoutSettingsChanged');
+        if (! empty($error)) {
+            return $module->displayError($error);
+        }
+        return "";
+    }
+
     private static function deleteCachedEntries()
     {
         $toDelete = array(
@@ -1379,7 +1393,7 @@ class PostFinanceCheckoutBasemodule
         $parameters = array();
         $parameters['methodId'] = $methodConfiguration->getId();
         $parameters['configurationId'] = $methodConfiguration->getConfigurationId();
-        $cart->iframe = (bool) Configuration::get(self::CK_INTEGRATION);
+        $parameters['iframe'] = (bool) Configuration::get(self::CK_INTEGRATION);
 
         $parameters['link'] = $module->getContext()->link->getModuleLink(
             'postfinancecheckout',
@@ -1548,7 +1562,7 @@ class PostFinanceCheckoutBasemodule
                     }
                 }
 
-                
+
                 if (strpos($payment_method, "postfinancecheckout_") === 0) {
                     $id = Tools::substr($payment_method, strpos($payment_method, "_") + 1);
                     $methodConfiguration = new PostFinanceCheckoutModelMethodconfiguration($id);

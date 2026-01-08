@@ -6,7 +6,7 @@
  * This Prestashop module enables to process payments with PostFinance Checkout (https://postfinance.ch/en/business/products/e-commerce/postfinance-checkout-all-in-one.html).
  *
  * @author customweb GmbH (http://www.customweb.com/)
- * @copyright 2017 - 2025 customweb GmbH
+ * @copyright 2017 - 2026 customweb GmbH
  * @license http://www.apache.org/licenses/LICENSE-2.0 Apache Software License (ASL 2.0)
  */
 
@@ -32,7 +32,7 @@ class PostFinanceCheckout extends PaymentModule
         $this->author = 'wallee AG';
         $this->bootstrap = true;
         $this->need_instance = 0;
-        $this->version = '2.0.3';
+        $this->version = '2.0.4';
         $this->displayName = 'PostFinance Checkout';
         $this->description = $this->l('This PrestaShop module enables to process payments with %s.');
         $this->description = sprintf($this->description, 'PostFinance Checkout');
@@ -101,10 +101,17 @@ class PostFinanceCheckout extends PaymentModule
         return parent::uninstall() && PostFinanceCheckoutBasemodule::uninstall($this);
     }
 
+    public function upgrade($version)
+    {
+        return true;
+    }
+
     public function installHooks()
     {
         return PostFinanceCheckoutBasemodule::installHooks($this) && $this->registerHook('paymentOptions') &&
-            $this->registerHook('actionFrontControllerSetMedia');
+            $this->registerHook('actionFrontControllerSetMedia') &&
+            $this->registerHook('actionValidateStepComplete') &&
+            $this->registerHook('actionObjectAddressAddAfter');
     }
 
     public function getBackendControllers()
@@ -192,9 +199,9 @@ class PostFinanceCheckout extends PaymentModule
         }
         $cart = $params['cart'];
         try {
-            $possiblePaymentMethods = PostFinanceCheckoutServiceTransaction::instance()->getPossiblePaymentMethods(
-                $cart
-            );
+            $transactionService = PostFinanceCheckoutServiceTransaction::instance();
+            $transaction = $transactionService->getTransactionFromCart($cart);
+            $possiblePaymentMethods = $transactionService->getPossiblePaymentMethods($cart, $transaction);
         } catch (PostFinanceCheckoutExceptionInvalidtransactionamount $e) {
             PrestaShopLogger::addLog($e->getMessage() . " CartId: " . $cart->id, 2, null, 'PostFinanceCheckout');
             $paymentOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
@@ -221,18 +228,7 @@ class PostFinanceCheckout extends PaymentModule
         }
         $shopId = $cart->id_shop;
         $language = Context::getContext()->language->language_code;
-        $methods = array();
-        foreach ($possiblePaymentMethods as $possible) {
-            $methodConfiguration = PostFinanceCheckoutModelMethodconfiguration::loadByConfigurationAndShop(
-                $possible->getSpaceId(),
-                $possible->getId(),
-                $shopId
-            );
-            if (!$methodConfiguration->isActive()) {
-                continue;
-            }
-            $methods[] = $methodConfiguration;
-        }
+        $methods = $this->filterShopMethodConfigurations($shopId, $possiblePaymentMethods);
         $result = array();
 
         $this->context->smarty->registerPlugin(
@@ -247,7 +243,6 @@ class PostFinanceCheckout extends PaymentModule
         foreach (PostFinanceCheckoutHelper::sortMethodConfiguration($methods) as $methodConfiguration) {
             $parameters = PostFinanceCheckoutBasemodule::getParametersFromMethodConfiguration($this, $methodConfiguration, $cart, $shopId, $language);
             $parameters['priceDisplayTax'] = Group::getPriceDisplayMethod(Group::getCurrent()->id);
-            $parameters['iframe'] = $cart->iframe;
             $parameters['orderUrl'] = $this->context->link->getModuleLink(
                 'postfinancecheckout',
                 'order',
@@ -275,71 +270,187 @@ class PostFinanceCheckout extends PaymentModule
         return $result;
     }
 
-    public function hookActionFrontControllerSetMedia($arr)
+    /**
+     * Filters configured method entities for the current shop and the available SDK payment methods.
+     *
+     * @param int $shopId
+     * @param \PostFinanceCheckout\Sdk\Model\PaymentMethodConfiguration[] $possiblePaymentMethods
+     * @return PostFinanceCheckoutModelMethodconfiguration[]
+     */
+    protected function filterShopMethodConfigurations($shopId, array $possiblePaymentMethods)
     {
-        if ($this->context->controller->php_self == 'order' || $this->context->controller->php_self == 'cart') {
-            $uniqueId = $this->context->cookie->pfc_device_id;
-            if ($uniqueId == false) {
-                $uniqueId = PostFinanceCheckoutHelper::generateUUID();
-                $this->context->cookie->pfc_device_id = $uniqueId;
-            }
-            $scriptUrl = PostFinanceCheckoutHelper::getBaseGatewayUrl() . '/s/' . Configuration::get(
-                PostFinanceCheckoutBasemodule::CK_SPACE_ID
-            ) . '/payment/device.js?sessionIdentifier=' . $uniqueId;
-            $this->context->controller->registerJavascript(
-                'postfinancecheckout-device-identifier',
-                $scriptUrl,
-                array(
-                    'server' => 'remote',
-                    'attributes' => 'async="async"'
-                )
-            );
+        $configured = PostFinanceCheckoutModelMethodconfiguration::loadValidForShop($shopId);
+        if (empty($configured) || empty($possiblePaymentMethods)) {
+            return array();
         }
-        if ($this->context->controller->php_self == 'order') {
-            $this->context->controller->registerStylesheet(
-                'postfinancecheckout-checkut-css',
-                'modules/' . $this->name . '/views/css/frontend/checkout.css'
-            );
-            $this->context->controller->registerJavascript(
-                'postfinancecheckout-checkout-js',
-                'modules/' . $this->name . '/views/js/frontend/checkout.js'
-            );
-            Media::addJsDef(
-                array(
-                    'postFinanceCheckoutCheckoutUrl' => $this->context->link->getModuleLink(
-                        'postfinancecheckout',
-                        'checkout',
-                        array(),
-                        true
-                    ),
-                    'postfinancecheckoutMsgJsonError' => $this->l(
-                        'The server experienced an unexpected error, you may try again or try to use a different payment method.'
-                    )
-                )
-            );
-            if (isset($this->context->cart) && Validate::isLoadedObject($this->context->cart)) {
-                try {
-                    $jsUrl = PostFinanceCheckoutServiceTransaction::instance()->getJavascriptUrl($this->context->cart);
-                    $this->context->controller->registerJavascript(
-                        'postfinancecheckout-iframe-handler',
-                        $jsUrl,
-                        array(
-                            'server' => 'remote',
-                            'priority' => 45,
-                            'attributes' => 'id="postfinancecheckout-iframe-handler"'
-                        )
-                    );
-                } catch (Exception $e) {
+
+        $bySpaceAndConfiguration = array();
+        foreach ($configured as $methodConfiguration) {
+            $spaceId = $methodConfiguration->getSpaceId();
+            if (! isset($bySpaceAndConfiguration[$spaceId])) {
+                $bySpaceAndConfiguration[$spaceId] = array();
+            }
+            $bySpaceAndConfiguration[$spaceId][$methodConfiguration->getConfigurationId()] = $methodConfiguration;
+        }
+
+        $result = array();
+        foreach ($possiblePaymentMethods as $possible) {
+            $spaceId = $possible->getSpaceId();
+            $configurationId = $possible->getId();
+            if (isset($bySpaceAndConfiguration[$spaceId][$configurationId])) {
+                $methodConfiguration = $bySpaceAndConfiguration[$spaceId][$configurationId];
+                if ($methodConfiguration->isActive()) {
+                    $result[] = $methodConfiguration;
                 }
             }
         }
-        if ($this->context->controller->php_self == 'order-detail') {
-            $this->context->controller->registerJavascript(
+
+        return $result;
+    }
+
+    public function hookActionFrontControllerSetMedia()
+    {
+        $controller = $this->context->controller;
+
+        if (!$controller) {
+            return;
+        }
+
+        $phpSelf = $controller->php_self;
+        if ($phpSelf === 'order' || $phpSelf === 'cart') {
+
+            // Ensure device ID exists
+            if (empty($this->context->cookie->pfc_device_id)) {
+                $this->context->cookie->pfc_device_id = PostFinanceCheckoutHelper::generateUUID();
+            }
+
+            $deviceId = $this->context->cookie->pfc_device_id;
+
+            $scriptUrl = PostFinanceCheckoutHelper::getBaseGatewayUrl() .
+                '/s/' . Configuration::get(PostFinanceCheckoutBasemodule::CK_SPACE_ID) .
+                '/payment/device.js?sessionIdentifier=' . $deviceId;
+
+            $controller->registerJavascript(
+                'postfinancecheckout-device-identifier',
+                $scriptUrl,
+                [
+                'server' => 'remote',
+                'attributes' => 'async'
+                ]
+            );
+        }
+
+        /**
+         * ORDER PAGE ONLY
+         * Add checkout JS/CSS + iframe handler
+         */
+        if ($phpSelf === 'order') {
+
+            // checkout styles
+            $controller->registerStylesheet(
+                'postfinancecheckout-checkout-css',
+                'modules/' . $this->name . '/views/css/frontend/checkout.css'
+            );
+
+            // checkout JS
+            $controller->registerJavascript(
                 'postfinancecheckout-checkout-js',
+                'modules/' . $this->name . '/views/js/frontend/checkout.js'
+            );
+
+            // define global JS variables
+            Media::addJsDef([
+                'postFinanceCheckoutCheckoutUrl' => $this->context->link->getModuleLink(
+                'postfinancecheckout',
+                'checkout',
+                [],
+                true
+                ),
+                'postfinancecheckoutMsgJsonError' => $this->l(
+                'The server experienced an unexpected error, you may try again or try a different payment method.'
+                )
+            ]);
+
+            // Iframe handler JS (only when integration = iframe)
+            $cart = $this->context->cart;
+
+            if ($cart && Validate::isLoadedObject($cart)) {
+                try {
+                    // Get integration type from configuration
+                    // 0 = iframe
+                    // 1 = payment page
+                    $integrationType = (int) Configuration::get(PostFinanceCheckoutBasemodule::CK_INTEGRATION);
+
+                    // Only load JS when NOT payment page
+                    if ($integrationType !== Configuration::get(PostFinanceCheckoutBasemodule::CK_INTEGRATION_TYPE_PAYMENT_PAGE)) {
+
+                        $jsUrl = PostFinanceCheckoutServiceTransaction::instance()
+                            ->getJavascriptUrl($cart);
+
+                        $this->context->controller->registerJavascript(
+                            'postfinancecheckout-iframe-handler',
+                            $jsUrl,
+                            [
+                            'server' => 'remote',
+                            'priority' => 45,
+                            'attributes' => 'id="postfinancecheckout-iframe-handler"'
+                            ]
+                        );
+                    }
+
+                } catch (Exception $e) {
+                    // same behavior: silently ignore
+                }
+            }
+        }
+
+        /**
+         * ORDER-DETAIL PAGE
+         */
+        if ($phpSelf === 'order-detail') {
+            $controller->registerJavascript(
+                'postfinancecheckout-orderdetail-js',
                 'modules/' . $this->name . '/views/js/frontend/orderdetail.js'
             );
         }
     }
+
+    public function hookActionObjectAddressAddAfter($params)
+    {
+        $this->processAddressChange(isset($params['object']) ? $params['object'] : null);
+    }
+
+    public function hookActionValidateStepComplete($params)
+    {
+        if (isset($params['step_name']) && $params['step_name'] === 'addresses') {
+            $this->processAddressChange(null);
+        }
+    }
+
+    /**
+     * Refreshes the pending transaction when the checkout address is created/selected.
+     *
+     * @param Address|null $address
+     */
+    private function processAddressChange($address = null)
+    {
+        $cart = $this->context->cart;
+        if (!$cart || !Validate::isLoadedObject($cart)) {
+            return;
+        }
+
+        try {
+            PostFinanceCheckoutServiceTransaction::instance()->refreshTransactionFromCart($cart);
+        } catch (Exception $e) {
+            PrestaShopLogger::addLog(
+                'PostFinanceCheckout address refresh failed: ' . $e->getMessage(),
+                2,
+                null,
+                $this->name
+            );
+        }
+    }
+
 
     public function hookActionAdminControllerSetMedia($arr)
     {
