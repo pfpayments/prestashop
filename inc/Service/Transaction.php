@@ -5,7 +5,7 @@
  * This Prestashop module enables to process payments with PostFinance Checkout (https://postfinance.ch/en/business/products/e-commerce/postfinance-checkout-all-in-one.html).
  *
  * @author customweb GmbH (http://www.customweb.com/)
- * @copyright 2017 - 2025 customweb GmbH
+ * @copyright 2017 - 2026 customweb GmbH
  * @license http://www.apache.org/licenses/LICENSE-2.0 Apache Software License (ASL 2.0)
  */
 
@@ -1170,6 +1170,56 @@ class PostFinanceCheckoutServiceTransaction extends PostFinanceCheckoutServiceAb
             self::$transactionCache[$currentCartId] = $transaction;
         }
         return self::$transactionCache[$currentCartId];
+    }
+
+    /**
+     * Force-updates a pending transaction with the latest cart data (e.g. after an address change).
+     *
+     * @param Cart $cart
+     * @return \PostFinanceCheckout\Sdk\Model\Transaction|null
+     */
+    public function refreshTransactionFromCart(Cart $cart)
+    {
+        $ids = PostFinanceCheckoutHelper::getCartMeta($cart, 'mappingIds');
+        if (!is_array($ids) || !isset($ids['spaceId'], $ids['transactionId'])) {
+            return null;
+        }
+
+        try {
+            $transaction = $this->getTransaction($ids['spaceId'], $ids['transactionId']);
+        } catch (Exception $e) {
+            PrestaShopLogger::addLog(
+                'Failed to load transaction for address refresh: ' . $e->getMessage(),
+                2,
+                null,
+                'PostFinanceCheckout'
+            );
+            return null;
+        }
+
+        if ($transaction === null
+            || $transaction->getState() !== \PostFinanceCheckout\Sdk\Model\TransactionState::PENDING
+        ) {
+            return null;
+        }
+
+        return $this->updateTransactionFromCart($cart, $transaction);
+    }
+
+    /**
+     * Legacy helper kept for compatibility; delegates to refreshTransactionFromCart.
+     *
+     * @param Cart $cart
+     * @param Address $address
+     * @param int $spaceId
+     * @param int $transactionId
+     */
+    public function refreshTransactionAddress($cart, $address, $spaceId, $transactionId)
+    {
+        if (!isset($cart->id)) {
+            return null;
+        }
+        return $this->refreshTransactionFromCart($cart);
     }
 
     /**
