@@ -32,22 +32,29 @@ jQuery(function ($) {
 
         modify_content : function () {
             $(".postfinancecheckout-method-data").each(function (key, element) {
-                var infoId = $(element).closest('div.additional-information').attr('id');
+                var infoId = $(element).closest(
+                    '.js-additional-information, .payment-option__additional-information, .additional-information, div[id$="-additional-information"]'
+                ).attr('id');
                 var psId = infoId.substring(0, infoId.indexOf('-additional-information'));
                 var psContainer = $('#'+psId+'-container');
-                psContainer.children('label').children('img').addClass('postfinancecheckout-image');
+                var $label = psContainer.find('label[for="' + psId + '"]').first();
+                $label.find('img').addClass('postfinancecheckout-image');
                 psContainer.addClass('postfinancecheckout-payment-option');
                 var fee = $(element).closest("div.additional-information").find(".postfinancecheckout-payment-fee");
-                psContainer.children("label").append(fee);
+                $label.append(fee);
                 $("#"+psId).data("postfinancecheckout-method-id", $(element).data("method-id")).data("postfinancecheckout-configuration-id", $(element).data("configuration-id"));
             });
         },
 
         add_listeners : function () {
             var self = this;
-            $("input[name='payment-option']").off("click.postfinancecheckout").on("click.postfinancecheckout", {
-                self : this
-                }, this.payment_method_click);
+            $(document)
+                .off("change.postfinancecheckout", "input[name='payment-option']")
+                .on(
+                    "change.postfinancecheckout", "input[name='payment-option']", 
+                    { self: this },
+                    this.payment_method_click
+                );
             $('form.postfinancecheckout-payment-form').each(function () {
                 this.originalSubmit = this.submit;
                 this.submit = function (evt) {
