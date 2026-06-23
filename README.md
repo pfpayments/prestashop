@@ -12,7 +12,7 @@ To install module manually by dragging up zip file, please download [.zip archiv
 
 ## Documentation
 
-* [English](https://plugin-documentation.postfinance-checkout.ch/pfpayments/prestashop/1.0.17/docs/en/documentation.html)
+* [English](https://plugin-documentation.postfinance-checkout.ch/pfpayments/prestashop/1.0.18/docs/en/documentation.html)
 
 ## Support
 

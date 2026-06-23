@@ -87,7 +87,8 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
             $order->setCurrentState($authorizedStatusId);
             $order->save();
         }
-        PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
+        $recordedMessages = PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
+        PostFinanceCheckoutHelper::storeDeferredEmails($recordedMessages, $sourceOrder);
         if (Configuration::get(PostFinanceCheckoutBasemodule::CK_MAIL, null, null, $sourceOrder->id_shop)) {
             // Send stored messages
             $messages = PostFinanceCheckoutHelper::getOrderEmails($sourceOrder);
@@ -121,7 +122,8 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
                 $order->save();
             }
         }
-        PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
+        $recordedMessages = PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
+        PostFinanceCheckoutHelper::storeDeferredEmails($recordedMessages, $sourceOrder);
         PostFinanceCheckoutServiceTransaction::instance()->updateTransactionInfo($transaction, $sourceOrder);
     }
 
@@ -141,6 +143,7 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
         }
         PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
         PostFinanceCheckoutServiceTransaction::instance()->updateTransactionInfo($transaction, $sourceOrder);
+        PostFinanceCheckoutHelper::deleteOrderEmails($order, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
     }
 
     protected function failed(\PostFinanceCheckout\Sdk\Model\Transaction $transaction, Order $sourceOrder)
@@ -157,6 +160,7 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
         PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
         PostFinanceCheckoutHelper::deleteOrderEmails($sourceOrder);
         PostFinanceCheckoutServiceTransaction::instance()->updateTransactionInfo($transaction, $sourceOrder);
+        PostFinanceCheckoutHelper::deleteOrderEmails($order, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
     }
 
     protected function fulfill(\PostFinanceCheckout\Sdk\Model\Transaction $transaction, Order $sourceOrder)
@@ -178,6 +182,7 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
         }
         PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
         PostFinanceCheckoutServiceTransaction::instance()->updateTransactionInfo($transaction, $sourceOrder);
+        PostFinanceCheckoutHelper::sendDeferredEmails($sourceOrder);
     }
 
     protected function voided(\PostFinanceCheckout\Sdk\Model\Transaction $transaction, Order $sourceOrder)
@@ -195,5 +200,6 @@ class PostFinanceCheckoutWebhookTransaction extends PostFinanceCheckoutWebhookOr
         }
         PostFinanceCheckoutBasemodule::stopRecordingMailMessages();
         PostFinanceCheckoutServiceTransaction::instance()->updateTransactionInfo($transaction, $sourceOrder);
+        PostFinanceCheckoutHelper::deleteOrderEmails($order, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
     }
 }
