@@ -470,23 +470,23 @@ class PostFinanceCheckoutHelper
         );
     }
 
-    public static function storeOrderEmails(Order $order, $mails)
+    public static function storeOrderEmails(Order $order, $mails, $key = 'mails')
     {
         Db::getInstance()->execute(
             'INSERT INTO ' . _DB_PREFIX_ . 'pfc_order_meta (order_id, meta_key, meta_value) VALUES ("' . (int) $order->id .
-            '", "' . pSQL('mails') . '", "' .
+            '", "' . pSQL($key) . '", "' .
             pSQL(PostFinanceCheckoutTools::base64Encode(serialize($mails))) .
             '") ON DUPLICATE KEY UPDATE meta_value = "' .
             pSQL(PostFinanceCheckoutTools::base64Encode(serialize($mails))) . '";'
         );
     }
 
-    public static function getOrderEmails(Order $order)
+    public static function getOrderEmails(Order $order, $key = 'mails')
     {
         class_exists('Mail');
         $value = Db::getInstance()->getValue(
             'SELECT meta_value FROM ' . _DB_PREFIX_ . 'pfc_order_meta WHERE order_id = "' . (int) $order->id .
-            '" AND meta_key = "' . pSQL('mails') . '";',
+            '" AND meta_key = "' . pSQL($key) . '";',
             false
         );
         if ($value !== false) {
@@ -495,9 +495,9 @@ class PostFinanceCheckoutHelper
         return array();
     }
 
-    public static function deleteOrderEmails(Order $order)
+    public static function deleteOrderEmails(Order $order, $key = 'mails')
     {
-        self::clearOrderMeta($order, 'mails');
+        self::clearOrderMeta($order, $key);
     }
 
     /**
@@ -718,7 +718,54 @@ class PostFinanceCheckoutHelper
             self::SHOP_SYSTEM             => 'prestashop',
             self::SHOP_SYSTEM_VERSION     => $shop_version,
             self::SHOP_SYSTEM_AND_VERSION => 'prestashop-' . $major_version . '.' . $minor_version,
-            self::PLUGIN_SYSTEM_VERSION   => '2.0.6',
+            self::PLUGIN_SYSTEM_VERSION   => '2.0.7',
             ];
+    }
+
+    /**
+     * Stores emails for later sending. Currently stores 'download_product' template emails.
+     *
+     * @param array $configurations
+     * @param Order $order
+     * 
+     * @return void
+     */
+    public static function storeDeferredEmails($recordedMessages, Order $order)
+    {
+        if (!Configuration::get(PostFinanceCheckoutBasemodule::CK_MAIL, null, null, $order->id_shop)) {
+            // Do not store/send email
+            return;
+        }
+        $deferredMessages = array();
+        foreach ($recordedMessages as $message) {
+            if ($message->getTemplateName() === 'download_product') {
+                $deferredMessages[] = $message;
+            }
+        }
+        if (count($deferredMessages) > 0) {
+            self::storeOrderEmails($order, $deferredMessages, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
+        }
+    }
+
+    /**
+     * Sends stored emails.
+     * 
+     * @param Order $order
+     *
+     * @return string
+     */
+    public static function sendDeferredEmails(Order $order)
+    {
+        if (!Configuration::get(PostFinanceCheckoutBasemodule::CK_MAIL, null, null, $order->id_shop)) {
+            self::deleteOrderEmails($order, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
+            return;
+        }
+        $deferredMessages = self::getOrderEmails($order, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
+        if (count($deferredMessages) > 0 && method_exists('Mail', 'sendMailMessageWithoutHook')) {
+            foreach ($deferredMessages as $message) {
+                Mail::sendMailMessageWithoutHook($message, false);
+            }
+        }
+        self::deleteOrderEmails($order, PostFinanceCheckoutBasemodule::EMAIL_KEY_DOWNLOAD);
     }
 }
