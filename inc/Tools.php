@@ -30,19 +30,4 @@ class PostFinanceCheckoutTools
     {
         return call_user_func('hash_hmac', $algo, $data, $key, $raw_output);
     }
-
-    /**
-     * Returns the currently installed postfinancecheckout version of the module from the database.
-     *
-     * @return string|null
-     * @throws PrestaShopException
-     */
-    public static function getInstalledModuleVersion(): ?string
-    {
-        return Db::getInstance()->getValue(
-            'SELECT `version`
-             FROM `' . _DB_PREFIX_ . 'module`
-             WHERE `name` = "' . pSQL('postfinancecheckout') . '"'
-        );
-    }
 }

@@ -470,7 +470,7 @@ class PostFinanceCheckoutServiceTransaction extends PostFinanceCheckoutServiceAb
      */
     public function getPossiblePaymentMethods(
         Cart $cart,
-        \PostFinanceCheckout\Sdk\Model\Transaction $transaction = null
+        ?\PostFinanceCheckout\Sdk\Model\Transaction $transaction = null
     ) {
         return $this->warmPossiblePaymentMethodCache($cart, $transaction);
     }
@@ -488,7 +488,7 @@ class PostFinanceCheckoutServiceTransaction extends PostFinanceCheckoutServiceAb
      */
     private function warmPossiblePaymentMethodCache(
         Cart $cart,
-        \PostFinanceCheckout\Sdk\Model\Transaction $transaction = null,
+        ?\PostFinanceCheckout\Sdk\Model\Transaction $transaction = null,
         $forceReload = false,
         $failSilently = false
     ) {

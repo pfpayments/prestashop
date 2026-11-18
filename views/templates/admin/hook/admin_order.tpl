@@ -41,7 +41,7 @@
 				{foreach from=$affectedOrders item=other}
 					<li>
 						<a href="{$link->getAdminLink('AdminOrders')|escape:'html':'UTF-8'}&amp;vieworder&amp;id_order={$other|intval}">
-							{l s='Order %d' sprintf=$other mod='postfinancecheckout' js=1}
+							{l s='Order %d' sprintf=[$other] mod='postfinancecheckout' js=1}
 						</a>
 					</li>
 				{/foreach}
@@ -59,7 +59,7 @@
 				{foreach from=$affectedOrders item=other}
 					<li>
 						<a href="{$link->getAdminLink('AdminOrders')|escape:'html':'UTF-8'}&amp;vieworder&amp;id_order={$other|intval}">
-							{l s='Order %d' sprintf=$other mod='postfinancecheckout'}
+							{l s='Order %d' sprintf=[$other] mod='postfinancecheckout'}
 						</a>
 					</li>
 				{/foreach}
@@ -94,23 +94,23 @@
 
 {if isset($refundChanges)}
 	<div style="display:none;" class="hidden-print" id="postfinancecheckout_changes_refund">
-		<p id="postfinancecheckout_refund_online_text_total">{l s='This refund is sent to %s and money is transfered back to the customer.' sprintf='PostFinance Checkout' mod='postfinancecheckout'}</p>
-		<p id="postfinancecheckout_refund_offline_text_total" style="display:none;">{l s='This refund is sent to %s, but [1]no[/1] money is transfered back to the customer.' tags=['<b>'] sprintf='PostFinance Checkout' mod='postfinancecheckout'}</p>
-		<p id="postfinancecheckout_refund_no_text_total" style="display:none;">{l s='This refund is [1]not[/1] sent to %s.' tags=['<b>'] sprintf='PostFinance Checkout' mod='postfinancecheckout'}</p>
+		<p id="postfinancecheckout_refund_online_text_total">{l s='This refund is sent to %s and money is transfered back to the customer.' sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}</p>
+		<p id="postfinancecheckout_refund_offline_text_total" style="display:none;">{l s='This refund is sent to %s, but [1]no[/1] money is transfered back to the customer.' tags=['<b>'] sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}</p>
+		<p id="postfinancecheckout_refund_no_text_total" style="display:none;">{l s='This refund is [1]not[/1] sent to %s.' tags=['<b>'] sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}</p>
 		<p id="postfinancecheckout_refund_offline_span_total" class="checkbox" style="display: none;">
 			<label for="postfinancecheckout_refund_offline_cb_total">
 				<input type="checkbox" id="postfinancecheckout_refund_offline_cb_total" name="postfinancecheckout_offline">
-				{l s='Send as offline refund to %s.' sprintf='PostFinance Checkout' mod='postfinancecheckout'}
+				{l s='Send as offline refund to %s.' sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}
 			</label>
 		</p>
 
-		<p id="postfinancecheckout_refund_online_text_partial">{l s='This refund is sent to %s and money is transfered back to the customer.' sprintf='PostFinance Checkout' mod='postfinancecheckout'}</p>
-		<p id="postfinancecheckout_refund_offline_text_partial" style="display:none;">{l s='This refund is sent to %s, but [1]no[/1] money is transfered back to the customer.' tags=['<b>'] sprintf='PostFinance Checkout' mod='postfinancecheckout'}</p>
-		<p id="postfinancecheckout_refund_no_text_partial" style="display:none;">{l s='This refund is [1]not[/1] sent to %s.' tags=['<b>'] sprintf='PostFinance Checkout' mod='postfinancecheckout'}</p>
+		<p id="postfinancecheckout_refund_online_text_partial">{l s='This refund is sent to %s and money is transfered back to the customer.' sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}</p>
+		<p id="postfinancecheckout_refund_offline_text_partial" style="display:none;">{l s='This refund is sent to %s, but [1]no[/1] money is transfered back to the customer.' tags=['<b>'] sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}</p>
+		<p id="postfinancecheckout_refund_no_text_partial" style="display:none;">{l s='This refund is [1]not[/1] sent to %s.' tags=['<b>'] sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}</p>
 		<p id="postfinancecheckout_refund_offline_span_partial" class="checkbox" style="display: none;">
 			<label for="postfinancecheckout_refund_offline_cb_partial">
 				<input type="checkbox" id="postfinancecheckout_refund_offline_cb_partial" name="postfinancecheckout_offline">
-				{l s='Send as offline refund to %s.' sprintf='PostFinance Checkout' mod='postfinancecheckout'}
+				{l s='Send as offline refund to %s.' sprintf=['PostFinance Checkout'] mod='postfinancecheckout'}
 			</label>
 		</p>
 	</div>

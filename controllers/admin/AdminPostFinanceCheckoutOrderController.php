@@ -14,7 +14,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
     public function postProcess()
     {
         parent::postProcess();
-        exit();
+        PostFinanceCheckoutHelper::endAdminRequest();
     }
 
     public function initProcess()
@@ -36,7 +36,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                     )
                 )
             );
-            die();
+            PostFinanceCheckoutHelper::endAdminRequest();
         }
     }
 
@@ -50,13 +50,13 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                 echo json_encode(array(
                     'success' => 'true'
                 ));
-                die();
+                PostFinanceCheckoutHelper::endAdminRequest();
             } catch (Exception $e) {
                 echo json_encode(array(
                     'success' => 'false',
                     'message' => $e->getMessage()
                 ));
-                die();
+                PostFinanceCheckoutHelper::endAdminRequest();
             }
         } else {
             echo json_encode(
@@ -65,7 +65,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                     'message' => $this->module->l('Incomplete Request.', 'adminpostfinancecheckoutordercontroller')
                 )
             );
-            die();
+            PostFinanceCheckoutHelper::endAdminRequest();
         }
     }
 
@@ -84,7 +84,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                         )
                     )
                 );
-                die();
+                PostFinanceCheckoutHelper::endAdminRequest();
             } catch (Exception $e) {
                 echo json_encode(
                     array(
@@ -92,7 +92,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                         'message' => PostFinanceCheckoutHelper::cleanExceptionMessage($e->getMessage())
                     )
                 );
-                die();
+                PostFinanceCheckoutHelper::endAdminRequest();
             }
         } else {
             echo json_encode(
@@ -101,7 +101,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                     'message' => $this->module->l('Incomplete Request.', 'adminpostfinancecheckoutordercontroller')
                 )
             );
-            die();
+            PostFinanceCheckoutHelper::endAdminRequest();
         }
     }
 
@@ -120,7 +120,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                         )
                     )
                 );
-                die();
+                PostFinanceCheckoutHelper::endAdminRequest();
             } catch (Exception $e) {
                 echo json_encode(
                     array(
@@ -128,7 +128,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                         'message' => PostFinanceCheckoutHelper::cleanExceptionMessage($e->getMessage())
                     )
                 );
-                die();
+                PostFinanceCheckoutHelper::endAdminRequest();
             }
         } else {
             echo json_encode(
@@ -137,7 +137,7 @@ class AdminPostFinanceCheckoutOrderController extends ModuleAdminController
                     'message' => $this->module->l('Incomplete Request.', 'adminpostfinancecheckoutordercontroller')
                 )
             );
-            die();
+            PostFinanceCheckoutHelper::endAdminRequest();
         }
     }
 }

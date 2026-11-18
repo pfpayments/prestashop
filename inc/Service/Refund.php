@@ -330,8 +330,7 @@ class PostFinanceCheckoutServiceRefund extends PostFinanceCheckoutServiceAbstrac
         $baseLineItems = $this->getBaseLineItems($spaceId, $transactionId);
         $reductionAmount = PostFinanceCheckoutHelper::getReductionAmount($baseLineItems, $reductions);
 
-        $configuration = PostFinanceCheckoutVersionadapter::getConfigurationInterface();
-        $computePrecision = $configuration->get('_PS_PRICE_COMPUTE_PRECISION_');
+        $computePrecision = PostFinanceCheckoutVersionadapter::getPriceComputePrecision();
 
         if (Tools::ps_round($refundTotal, $computePrecision) != Tools::ps_round($reductionAmount, $computePrecision)) {
             $fixedReductions = array();
@@ -375,7 +374,7 @@ class PostFinanceCheckoutServiceRefund extends PostFinanceCheckoutServiceAbstrac
      * @param \PostFinanceCheckout\Sdk\Model\Refund $refund
      * @return \PostFinanceCheckout\Sdk\Model\LineItem[]
      */
-    protected function getBaseLineItems($spaceId, $transactionId, \PostFinanceCheckout\Sdk\Model\Refund $refund = null)
+    protected function getBaseLineItems($spaceId, $transactionId, ?\PostFinanceCheckout\Sdk\Model\Refund $refund = null)
     {
         $lastSuccessfulRefund = $this->getLastSuccessfulRefund($spaceId, $transactionId, $refund);
         if ($lastSuccessfulRefund) {
@@ -433,7 +432,7 @@ class PostFinanceCheckoutServiceRefund extends PostFinanceCheckoutServiceAbstrac
     protected function getLastSuccessfulRefund(
         $spaceId,
         $transactionId,
-        \PostFinanceCheckout\Sdk\Model\Refund $refund = null
+        ?\PostFinanceCheckout\Sdk\Model\Refund $refund = null
     ) {
         $query = new \PostFinanceCheckout\Sdk\Model\EntityQuery();
 

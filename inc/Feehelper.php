@@ -109,8 +109,6 @@ class PostFinanceCheckoutFeehelper
                 'surcharge_total_wt' => 0
             );
         }
-        $configuration = PostFinanceCheckoutVersionadapter::getConfigurationInterface();
-
         $amount = (float) Configuration::get(PostFinanceCheckoutBasemodule::CK_SURCHARGE_AMOUNT);
 
         $amountConverted = Tools::convertPrice($amount, Currency::getCurrencyInstance((int) $cart->id_currency));
@@ -151,7 +149,7 @@ class PostFinanceCheckoutFeehelper
             Currency::getCurrencyInstance((int) $cart->id_currency)
         );
 
-        $computePrecision = $configuration->get('_PS_PRICE_COMPUTE_PRECISION_');
+        $computePrecision = PostFinanceCheckoutVersionadapter::getPriceComputePrecision();
 
         if (Tools::ps_round($total, $computePrecision) >= Tools::ps_round($surchargeBaseConverted, $computePrecision)) {
             return array(
@@ -204,8 +202,6 @@ class PostFinanceCheckoutFeehelper
             );
         }
 
-        $configuration = PostFinanceCheckoutVersionadapter::getConfigurationInterface();
-
         $fixed = $methodConfiguration->getFeeFixed();
 
         $feeFixedConverted = Tools::convertPrice($fixed, Currency::getCurrencyInstance((int) $cart->id_currency));
@@ -248,7 +244,7 @@ class PostFinanceCheckoutFeehelper
         $product = new Product($feeProductId);
 
         $taxGroup = $product->getIdTaxRulesGroup();
-        $computePrecision = $configuration->get('_PS_PRICE_COMPUTE_PRECISION_');
+        $computePrecision = PostFinanceCheckoutVersionadapter::getPriceComputePrecision();
 
         $result = array(
             'fee_total' => Tools::ps_round($feeTotal, $computePrecision),
